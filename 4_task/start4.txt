@@ -1,0 +1,1 @@
+swipl -s run_all_tests.pl -t halt

@@ -1,0 +1,39 @@
+cabal-version: 3.0
+name:          quadtree
+version:       1.0.0
+synopsis:      Двумерное дерево квадрантов (Quadtree) — структура данных для муравьиной симуляции
+description:
+  Реализация двумерного дерева квадрантов (вариант 6).
+  Поддерживает вставку точек, поиск в радиусе, удаление.
+  Структура оформлена как монада для последовательного изменения состояния.
+license:       MIT
+author:        Student
+build-type:    Simple
+
+common common-opts
+  ghc-options:
+    -Wall -O2 -dynamic
+  default-language: Haskell2010
+
+library
+  import:          common-opts
+  hs-source-dirs:  src
+  exposed-modules: QuadTree
+  build-depends:   base >= 4.16 && < 5
+
+executable quadtree-demo
+  import:         common-opts
+  hs-source-dirs: app
+  main-is:        Main.hs
+  build-depends:
+    , base >= 4.16 && < 5
+    , quadtree
+
+test-suite quadtree-tests
+  import:         common-opts
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Test.hs
+  build-depends:
+    , base >= 4.16 && < 5
+    , quadtree
