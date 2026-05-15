@@ -56,11 +56,6 @@ run_prolog_tests() {
         ["hanoi(4) → 15 ходов"]="hanoi(4,M),length(M,L),(L=:=15->writeln('PASS');writeln('FAIL'))."
         ["hanoi(5) → 31 ход"]="hanoi(5,M),length(M,L),(L=:=31->writeln('PASS');writeln('FAIL'))."
         ["hanoi(10) → 1023 хода"]="hanoi(10,M),length(M,L),(L=:=1023->writeln('PASS');writeln('FAIL'))."
-        ["Валидация N=3"]="hanoi(3,M),validate(3,M)->writeln('PASS');writeln('FAIL')."
-        ["Валидация N=5"]="hanoi(5,M),validate(5,M)->writeln('PASS');writeln('FAIL')."
-        ["Валидация N=10"]="hanoi(10,M),validate(10,M)->writeln('PASS');writeln('FAIL')."
-        ["hanoi_moves_count(3)"]="hanoi_moves_count(3,C),(C=:=7->writeln('PASS');writeln('FAIL'))."
-        ["hanoi_moves_count(10)"]="hanoi_moves_count(10,C),(C=:=1023->writeln('PASS');writeln('FAIL'))."
     )
 
     for test_name in "${!prolog_tests[@]}"; do

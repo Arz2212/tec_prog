@@ -1,18 +1,15 @@
 cabal-version: 3.0
 name:          quadtree
 version:       1.0.0
-synopsis:      Двумерное дерево квадрантов (Quadtree) — структура данных для муравьиной симуляции
+synopsis:      Двумерное дерево квадрантов — работа 8, вариант 6
 description:
-  Реализация двумерного дерева квадрантов (вариант 6).
-  Поддерживает вставку точек, поиск в радиусе, удаление.
-  Структура оформлена как монада для последовательного изменения состояния.
+  Двумерное дерево квадрантов: вставка точек, поиск в радиусе, монадический интерфейс.
 license:       MIT
 author:        Student
 build-type:    Simple
 
 common common-opts
-  ghc-options:
-    -Wall -O2 -dynamic
+  ghc-options:    -Wall
   default-language: Haskell2010
 
 library

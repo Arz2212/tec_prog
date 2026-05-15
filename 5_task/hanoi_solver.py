@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Обёртка для вызова Prolog-решения Ханойской башни.
-
-Использует subprocess для взаимодействия с SWI-Prolog.
-"""
 
 import subprocess
 import sys
@@ -21,7 +16,6 @@ class HanoiSolver:
 
     @staticmethod
     def _parse_moves(output: str) -> list[tuple[str, str]]:
-        """Разбирает вывод Prolog в список ходов (from, to)."""
         moves = []
         pattern = re.compile(r"move\((\w+),(\w+)\)")
         for match in pattern.finditer(output):
@@ -29,14 +23,6 @@ class HanoiSolver:
         return moves
 
     def solve(self, n: int) -> list[tuple[str, str]]:
-        """Решить Ханойскую башню для N дисков.
-
-        Args:
-            n: число дисков (1 ≤ n ≤ 10)
-
-        Returns:
-            Список ходов, каждый — кортеж (from, to).
-        """
         if not (1 <= n <= 10):
             raise ValueError(f"N должно быть от 1 до 10, получено {n}")
 
@@ -57,33 +43,26 @@ class HanoiSolver:
         return self._parse_moves(result.stdout)
 
     def solve_as_strings(self, n: int) -> list[str]:
-        """Вернуть решение в виде списка строк вида 'left -> right'."""
         moves = self.solve(n)
         return [f"{f} -> {t}" for f, t in moves]
 
     def validate(self, n: int, moves: list[tuple[str, str]]) -> bool:
-        """Проверить корректность последовательности ходов для N дисков."""
-        moves_term = "[" + ",".join(
-            f"move({f},{t})" for f, t in moves
-        ) + "]"
-        cmd = [
-            "swipl", "-q",
-            "-g",
-            f"consult('{self.PROLOG_FILE}'),"
-            f"(validate({n},{moves_term})->writeln('OK');writeln('FAIL')),"
-            f"halt.",
-            "-t", "halt",
-        ]
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        return "OK" in result.stdout
+        disks = list(range(1, n + 1))  
+        state = {"left": disks.copy(), "center": [], "right": []}
+
+        for f, t in moves:
+            if f not in state or t not in state or f == t:
+                return False
+            if not state[f]:  
+                return False
+            disk = state[f].pop(0)  
+            if state[t] and disk > state[t][0]: 
+                return False
+            state[t].insert(0, disk) 
+
+        return state["left"] == [] and state["center"] == [] and state["right"] == disks
 
     def moves_count(self, n: int) -> int:
-        """Теоретическое минимальное число ходов: 2^n - 1."""
         return 2**n - 1
 
     def print_solution(self, n: int) -> None:

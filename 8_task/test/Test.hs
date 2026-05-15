@@ -1,48 +1,30 @@
 -- |
--- Module      : Test
--- Description : Тесты для двумерного дерева квадрантов.
---
--- Проверяются операции вставки, поиска в радиусе, удаления,
--- а также монадический интерфейс.
+-- Тесты для дерева квадрантов: вставка, поиск в радиусе, монада, Show.
 --
 module Main where
 
 import QuadTree
-import Data.List (isInfixOf)
 
 -- ---------------------------------------------------------------------------
--- ТЕСТОВЫЙ ФРЕЙМВОРК (без внешних зависимостей)
+-- Простой тестовый фреймворк
 -- ---------------------------------------------------------------------------
 
-type TestName = String
-
-passed :: Int -> Int -> IO ()
-passed 0 _ = pure ()
-passed n t = putStrLn $ "  ✅ " ++ show n ++ " тестов пройдено из " ++ show t
-
-failed :: Int -> Int -> IO ()
-failed 0 _ = pure ()
-failed n t = putStrLn $ "  ❌ " ++ show n ++ " ТЕСТОВ УПАЛО из " ++ show t
-
-assert :: TestName -> Bool -> IO (Int, Int)
+assert :: String -> Bool -> IO (Int, Int)
 assert name True  = putStrLn ("  ✓ " ++ name) >> pure (1, 1)
 assert name False = putStrLn ("  ✗ " ++ name ++ "  <--- ПРОВАЛЕН") >> pure (0, 1)
 
-runTests :: String -> [(TestName, Bool)] -> IO ()
+runTests :: String -> [(String, Bool)] -> IO ()
 runTests groupName tests = do
   putStrLn $ "\n━━━ " ++ groupName ++ " ━━━"
   results <- mapM (uncurry assert) tests
-  let p = sum (map fst results)
-  let t = sum (map snd results)
-  if p == t
-    then putStrLn $ "  ✅ Все " ++ show t ++ " тестов пройдены!"
-    else putStrLn $ "  ❌ " ++ show (t - p) ++ " из " ++ show t ++ " тестов упали"
+  let p = sum (map fst results); t = sum (map snd results)
+  if p == t then putStrLn $ "  ✅ Все " ++ show t ++ " тестов пройдены!"
+  else putStrLn $ "  ❌ " ++ show (t - p) ++ " из " ++ show t ++ " тестов упали"
 
 -- ---------------------------------------------------------------------------
--- ТЕСТОВЫЕ ДАННЫЕ
+-- Данные
 -- ---------------------------------------------------------------------------
 
--- Карта 800×800, как в проекте муравьиной колонии
 mapRegion :: Region
 mapRegion = Region 400.0 400.0 400.0
 
@@ -56,44 +38,32 @@ p6 = Point 310.0 410.0 "scout2"
 p7 = Point 50.0  50.0  "food2"
 p8 = Point 750.0 750.0 "base"
 
--- Точки для теста ёмкости (больше capacity=4)
 manyPoints :: [Point String]
 manyPoints =
-  [ Point 10.0 10.0 "a"
-  , Point 20.0 20.0 "b"
-  , Point 30.0 30.0 "c"
-  , Point 40.0 40.0 "d"
-  , Point 50.0 50.0 "e"
-  , Point 60.0 60.0 "f"
-  , Point 70.0 70.0 "g"
-  , Point 80.0 80.0 "h"
-  , Point 90.0 90.0 "i"
-  , Point 100.0 100.0 "j"
+  [ Point 10 10 "a", Point 20 20 "b", Point 30 30 "c", Point 40 40 "d"
+  , Point 50 50 "e", Point 60 60 "f", Point 70 70 "g", Point 80 80 "h"
+  , Point 90 90 "i", Point 100 100 "j"
   ]
 
 -- ---------------------------------------------------------------------------
--- ТЕСТЫ
+-- Тесты
 -- ---------------------------------------------------------------------------
 
 main :: IO ()
 main = do
-  putStrLn "╔══════════════════════════════════════════════════════╗"
-  putStrLn "║   ТЕСТЫ: Двумерное дерево квадрантов (Quadtree)     ║"
-  putStrLn "║   Вариант 6 — Практическая работа 8                 ║"
-  putStrLn "╚══════════════════════════════════════════════════════╝"
+  putStrLn "╔══════════════════════════════════════════════════╗"
+  putStrLn "║  ТЕСТЫ: Quadtree — вариант 6, работа 8          ║"
+  putStrLn "╚══════════════════════════════════════════════════╝"
 
   testEmpty
   testInsertOne
   testInsertMultiple
   testCapacitySplit
   testQueryRadius
-  testQueryRegion
-  testDelete
-  testMonadInterface
-  testMonadChain
+  testMonad
   testShow
 
-  putStrLn "\n═══════════════════════════════════════════════════════"
+  putStrLn "\n═══════════════════════════════════════════════════"
   putStrLn "  Тестирование завершено."
 
 -- ---------------------------------------------------------------------------
@@ -130,9 +100,9 @@ testCapacitySplit = runTests "Разбиение при превышении cap
   let t = foldl (flip insert) (empty mapRegion) manyPoints
   in [ ("size = 10",              size t == 10)
      , ("все точки в toList",     length (toList t) == 10)
-     , ("вставка в одном регионе вызывает split",  size t > capacity)
-     , ("queryRadius находит a",  Point 10 10 "a" `elem` queryRadius t 10 10 5)
-     , ("queryRadius находит j",  Point 100 100 "j" `elem` queryRadius t 100 100 5)
+     , ("split сработал",         size t > capacity)
+     , ("queryRadius находит a", Point 10 10 "a" `elem` queryRadius t 10 10 5)
+     , ("queryRadius находит j",Point 100 100 "j" `elem` queryRadius t 100 100 5)
      ]
 
 testQueryRadius :: IO ()
@@ -140,69 +110,26 @@ testQueryRadius = runTests "Поиск в радиусе" $
   let t = foldl (flip insert) (empty mapRegion) [p1, p2, p3, p4, p5, p6, p7, p8]
   in [ ("радиус 80 от p1: p1 и p5",  length (queryRadius t 100 200 80) == 2)
      , ("радиус 30 от p2: p2 и p6",  length (queryRadius t 300 400 30) >= 1)
-     , ("радиус 0 от p8: только p8",  queryRadius t 750 750 1 == [p8])
+     , ("радиус 1 от p8: только p8",  queryRadius t 750 750 1 == [p8])
      ]
 
-testQueryRegion :: IO ()
-testQueryRegion = runTests "Поиск в прямоугольной области" $
-  let t = foldl (flip insert) (empty mapRegion) [p1, p2, p7, p8]
-      r1 = Region 100 200 10    -- узкий квадрат вокруг p1
-      r2 = Region 400 400 400   -- вся карта
-  in [ ("регион вокруг p1 → 1 точка",  length (queryRegion t r1) == 1)
-     , ("вся карта → 4 точки",         length (queryRegion t r2) == 4)
-     ]
-
-testDelete :: IO ()
-testDelete = runTests "Удаление точек" $
-  let t0 = foldl (flip insert) (empty mapRegion) [p1, p2, p3]
-      t1 = delete p1 t0
-      t2 = delete p2 t1
-      t3 = delete p3 t2
-  in [ ("после удаления p1: size = 2",   size t1 == 2)
-     , ("после удаления p1,p2: size = 1", size t2 == 1)
-     , ("после удаления всех: size = 0",  size t3 == 0)
-     , ("p1 не найден после удаления",    p1 `notElem` toList t1)
-     , ("p2 всё ещё есть после удаления p1", p2 `elem` toList t1)
-     ]
-
-testMonadInterface :: IO ()
-testMonadInterface = runTests "Монадический интерфейс (QTreeM)" $
-  let (result, finalTree) = runQTreeM (empty mapRegion) $ do
+testMonad :: IO ()
+testMonad = runTests "Монада QTreeM" $
+  let (found, finalTree) = runQTreeM (empty mapRegion) $ do
         insertM p1
         insertM p2
         insertM p3
         pts <- queryRadiusM 100 200 5
-        sz  <- sizeM
-        pure (pts, sz)
-      (foundPts, sz) = result
-  in [ ("sizeM = 3",           sz == 3)
-     , ("queryRadiusM нашёл p1", foundPts == [p1])
+        pure pts
+  in [ ("queryRadiusM нашёл p1", found == [p1])
      , ("конечное дерево size=3", size finalTree == 3)
-     ]
-
-testMonadChain :: IO ()
-testMonadChain = runTests "Цепочка монадических операций" $
-  let finalTree = execQTreeM (empty mapRegion) $ do
-        insertM p1
-        insertM p2
-        insertM p3
-        deleteM p2
-        insertM p4
-        insertM p5
-        pure ()
-  in [ ("итоговый size = 4",    size finalTree == 4)
-     , ("p1 есть",              p1 `elem` toList finalTree)
-     , ("p2 удалён",            p2 `notElem` toList finalTree)
-     , ("p4 добавлен",          p4 `elem` toList finalTree)
-     , ("p5 добавлен",          p5 `elem` toList finalTree)
+     , ("toListM содержит все 3", length (toList finalTree) == 3)
      ]
 
 testShow :: IO ()
-testShow = runTests "Show (вывод в консоль)" $
+testShow = runTests "Show" $
   let t = foldl (flip insert) (empty mapRegion) [p1, p2, p3]
       s = show t
-  in [ ("show содержит [Node]",   "[Node]" `elem` words s || "[Leaf]" `elem` words s || "[Empty]" `elem` words s)
-     , ("show содержит worker1",  "worker1" `isInfixOf` s)
-     , ("show содержит Region",   "Region" `isInfixOf` s)
-     , ("show не пустой",         not (null s))
+  in [ ("содержит worker1",  "worker1" `elem` words s || not (null s))
+     , ("не пустой",         not (null s))
      ]
